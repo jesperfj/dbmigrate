@@ -36,7 +36,7 @@
         </exec>
         <xmlproperty file="svninfo"/>
         <delete file="svninfo"/>
-        <jar basedir="classes" destfile="dbmigration-${info.entry.commit(revision)}.jar">
+        <jar basedir="classes" destfile="dbmigration-r${info.entry.commit(revision)}.jar">
             <zipgroupfileset dir="lib" includes="cli*.jar"/>
         </jar>
     </target>
