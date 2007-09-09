@@ -113,10 +113,12 @@ public class Migrate {
      * Migrate the database from the current database version to the client version using
      * the following resources in this order of operations:
      * <p/>
-     * 1. Attempt to use a migration class: packageName + databaseName + ".Migrate" + dbVersion
-     * 2. If class in 1 not found, use a migration script: pacakge dir + "/" + databaseName + "/migrate" + dbVersion + ".sql"
-     * 3. If script in 2 not found, attempt to use a generic migration class: packageName + ".Migrate" + dbVersion
-     * 4. If class in 3 not found, use a generic migration script: pacakge dir + "/migrate" + dbVersion + ".sql"
+     * <ol>
+     * <li>Attempt to use a migration class: packageName + databaseName + ".Migrate" + dbVersion</li>
+     * <li>If class in 1 not found, use a migration script: pacakge dir + "/" + databaseName + "/migrate" + dbVersion + ".sql"</li>
+     * <li>If script in 2 not found, attempt to use a generic migration class: packageName + ".Migrate" + dbVersion</li>
+     * <li>If class in 3 not found, use a generic migration script: pacakge dir + "/migrate" + dbVersion + ".sql"</li>
+     * </ol>
      *
      * @throws MigrationException Will fail if the migration is unsuccessful
      */

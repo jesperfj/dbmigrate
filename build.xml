@@ -4,14 +4,13 @@
   -->
 
 <project name="dbmigration" default="all">
-    <target name="all" depends="clean,compile,jar,test"/>
+    <target name="all" depends="clean,compile,jar,docs,test,dist"/>
 
     <target name="clean">
         <delete dir="classes"/>
         <delete dir="test-classes"/>
         <delete dir="test-output"/>
-        <delete dir="emma"/>
-        <delete file="coverage.ec"/>
+        <delete dir="docs"/>
         <delete dir="." includes="dbmigration-*.jar"/>
     </target>
 
@@ -41,6 +40,11 @@
         </jar>
     </target>
 
+    <target name="docs">
+        <mkdir dir="docs"/>
+        <javadoc destdir="docs" package="com.sampullara.db" sourcepath="src" classpathref="classpath"/>
+    </target>
+
     <path id="test.classpath">
         <path refid="classpath"/>
         <fileset dir="test-lib" includes="*.jar"/>
@@ -66,4 +70,13 @@
             </batchtest>
         </junit>
     </target>
+
+    <target name="dist" depends="jar,docs">
+        <zip destfile="dbmigration-r${info.entry.commit(revision)}.zip">
+            <zipfileset dir="." includes="*.jar"/>
+            <zipfileset prefix="docs" dir="docs"/>
+            <zipfileset prefix="test" dir="test"/>
+        </zip>
+    </target>
+
 </project>
