@@ -12,6 +12,7 @@
         <delete dir="test-output"/>
         <delete dir="docs"/>
         <delete dir="." includes="dbmigration-*.jar"/>
+        <delete dir="." includes="dbmigration-*.zip"/>
     </target>
 
     <path id="classpath">
