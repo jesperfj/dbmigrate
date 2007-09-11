@@ -53,14 +53,18 @@
         <pathelement location="test-classes"/>
     </path>
 
-    <target name="test">
+    <property name="test-db-type" value="mysql"/>
+
+    <target name="test"
+            description="run unit tests.  can optionally set -Dtest-db-type to {mysql, h2}">
         <mkdir dir="test-output"/>
         <mkdir dir="test-classes"/>
         <javac srcdir="test" destdir="test-classes" classpathref="test.classpath"/>
         <copy todir="test-classes">
-            <fileset dir="test" includes="**/*.properties"/>
             <fileset dir="test" includes="**/*.sql"/>
         </copy>
+        <copy tofile="test-classes/com/sampullara/db/test.properties"
+			  file="test/com/sampullara/db/${test-db-type}.test.properties"/>
         <junit fork="true" forkmode="once" printsummary="true">
             <classpath>
                 <path refid="test.classpath"/>
