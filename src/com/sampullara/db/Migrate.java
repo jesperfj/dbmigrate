@@ -133,7 +133,8 @@ public class Migrate {
      *
      * @throws MigrationException Will fail if the migration is unsuccessful
      */
-    public void migrate() throws MigrationException {
+    public boolean migrate() throws MigrationException {
+        boolean migrated = false;
         Connection conn = getConnection();
         try {
             // We will try and do all the DDL in a transaction so that we can
@@ -161,6 +162,7 @@ public class Migrate {
                         genericClassMigration(conn, dbVersion) ||
                         genericScriptMigration(conn, dbVersion)) {
                     report(dbVersion);
+                    migrated = true;
                 } else {
                     throw new MigrationException("No migration found: " + dbVersion);
                 }
@@ -182,6 +184,7 @@ public class Migrate {
                 connection = null;
             }
         }
+        return migrated;
     }
 
     private void lockDB(Connection conn) throws MigrationException {

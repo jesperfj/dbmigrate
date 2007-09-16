@@ -93,6 +93,8 @@ public class MigrateTest extends TestCase {
         }
     }
 
+    private int migrations = 0;
+
     public void testMultithreaded() throws MigrationException, IOException, InterruptedException {
         Properties p = new Properties();
         InputStream is =
@@ -121,7 +123,7 @@ public class MigrateTest extends TestCase {
                     lock.await();
 
                     // We will actually migrate only once
-                    migrate.migrate();
+                    if (migrate.migrate()) migrations++;
 
                     // Assert nothing needs to be done
                     assertFalse(migrate.needsMigrate());
@@ -145,5 +147,6 @@ public class MigrateTest extends TestCase {
         thread1.join();
         thread2.join();
         thread3.join();
+        assertEquals(1, migrations);
     }
 }

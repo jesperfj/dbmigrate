@@ -442,6 +442,13 @@
       <JAVADOC />
       <SOURCES />
     </library>
+    <library name="H2">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/lib/h2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
   </component>
 </project>
 
