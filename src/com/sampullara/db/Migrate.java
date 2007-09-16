@@ -193,6 +193,7 @@ public class Migrate {
             String lockSQL = (String) db.get("lock_" + dbname);
             if (lockSQL != null) {
                 Statement st = conn.createStatement();
+                lockSQL = lockSQL.replace(":table", tablename);
                 st.execute(lockSQL);
             }
         } catch (SQLException e) {
@@ -206,6 +207,7 @@ public class Migrate {
             String unlockSQL = (String) db.get("unlock_" + dbname);
             if (unlockSQL != null) {
                 Statement st = conn.createStatement();
+                unlockSQL = unlockSQL.replace(":table", tablename);
                 st.execute(unlockSQL);
             }
         } catch (SQLException e) {
