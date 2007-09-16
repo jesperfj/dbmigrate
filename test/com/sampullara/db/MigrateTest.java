@@ -38,6 +38,37 @@ public class MigrateTest extends TestCase {
         migrate.migrate();
     }
 
+    public void testMigrationCommandLine() throws MigrationException, IOException {
+        Properties p = new Properties();
+        InputStream is =
+                Thread.currentThread().getContextClassLoader().getResourceAsStream("com/sampullara/db/test.properties");
+        p.load(is);
+
+        String[] commandline = new String[] {
+                "-url", p.getProperty("url", ""),
+                "-driver", p.getProperty("driver", ""),
+                "-user", p.getProperty("user", ""),
+                "-password", p.getProperty("password", ""),
+                "-version", p.getProperty("version", ""),
+                "-package", p.getProperty("package", ""),
+        };
+
+        Migrate migrate = new Migrate(commandline);
+        Migrate.scriptMigrator(migrate.getConnection(), "com/sampullara/test/migration/bootstrap.sql");
+
+        // Assert something needs to be done
+        assertTrue(migrate.needsMigrate());
+
+        // Do the migration
+        migrate.migrate();
+
+        // Assert nothing needs to be done
+        assertFalse(migrate.needsMigrate());
+
+        // Do it again
+        migrate.migrate();
+    }
+
     public void testMigrationOutOfSync() throws MigrationException, IOException {
         Properties p = new Properties();
         InputStream is =

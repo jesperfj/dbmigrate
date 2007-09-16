@@ -66,7 +66,12 @@ public class Migrate {
      * @throws MigrationException If it fails to migrate the database given
      */
     public static void main(String[] args) throws MigrationException {
-        Migrate migrate = new Migrate(args);
+        Migrate migrate;
+        try {
+            migrate = new Migrate(args);
+        } catch (Exception e) {
+            return;
+        }
         migrate.migrate();
     }
 
@@ -76,7 +81,13 @@ public class Migrate {
      * @param args Command line to do the migration
      */
     public Migrate(String[] args) {
-        Args.parse(this, args);
+        try {
+            Args.parse(this, args);
+        } catch (IllegalArgumentException iae) {
+            System.err.println(iae);
+            Args.usage(this);
+            throw iae;
+        }
         properties = new Properties();
         properties.put("user", user);
         properties.put("password", password);
