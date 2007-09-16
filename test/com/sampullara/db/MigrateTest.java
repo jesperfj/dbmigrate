@@ -5,12 +5,12 @@ import junit.framework.TestCase;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 
 /**
  * Test single and multithreaded migration
- *
+ * <p/>
  * User: sam
  * Date: Sep 8, 2007
  * Time: 2:55:02 PM
@@ -23,7 +23,7 @@ public class MigrateTest extends TestCase {
                 Thread.currentThread().getContextClassLoader().getResourceAsStream("com/sampullara/db/test.properties");
         p.load(is);
         Migrate migrate = new Migrate(p);
-        Migrate.scriptMigrator(migrate.getConnection(), "com/sampullara/test/migration/bootstrap.sql");
+        dropTable(migrate);
 
         // Assert something needs to be done
         assertTrue(migrate.needsMigrate());
@@ -36,6 +36,14 @@ public class MigrateTest extends TestCase {
 
         // Do it again
         migrate.migrate();
+    }
+
+    private void dropTable(Migrate migrate) {
+        try {
+            Migrate.scriptMigrator(migrate.getConnection(), "com/sampullara/test/migration/bootstrap.sql");
+        } catch (MigrationException me) {
+            // Ignore if the drop table is unsuccessful
+        }
     }
 
     public void testMigrationCommandLine() throws MigrationException, IOException {
@@ -54,7 +62,7 @@ public class MigrateTest extends TestCase {
         };
 
         Migrate migrate = new Migrate(commandline);
-        Migrate.scriptMigrator(migrate.getConnection(), "com/sampullara/test/migration/bootstrap.sql");
+        dropTable(migrate);
 
         // Assert something needs to be done
         assertTrue(migrate.needsMigrate());
@@ -75,8 +83,7 @@ public class MigrateTest extends TestCase {
                 Thread.currentThread().getContextClassLoader().getResourceAsStream("com/sampullara/db/test.properties");
         p.load(is);
         Migrate migrate = new Migrate(p);
-
-        Migrate.scriptMigrator(migrate.getConnection(), "com/sampullara/test/migration/bootstrap.sql");
+        dropTable(migrate);
 
         // Do the migration
         migrate.migrate();
@@ -104,7 +111,7 @@ public class MigrateTest extends TestCase {
         Migrate migrate = new Migrate(p);
 
         // Bootstrap the database by removing the old version table
-        Migrate.scriptMigrator(migrate.getConnection(), "com/sampullara/test/migration/bootstrap.sql");
+        dropTable(migrate);
 
         // Migrate to version 1
         migrate.migrate();
@@ -144,7 +151,7 @@ public class MigrateTest extends TestCase {
         thread1.start();
         thread2.start();
         thread3.start();
-        thread1.join();                          
+        thread1.join();
         thread2.join();
         thread3.join();
         assertEquals(1, migrations);

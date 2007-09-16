@@ -384,6 +384,16 @@ public class Migrate {
             // We are going to have to make an assumption that the database exists but there is no current
             // database version and use the migrate0 script.
             dbVersion = 0;
+            // We should reset the connection state at this point
+            Connection conn = getConnection();
+            try {
+                if (!conn.getAutoCommit()) {
+                    conn.rollback();
+                }
+                conn.setAutoCommit(false);
+            } catch (SQLException e1) {
+                throw new MigrationException("Could not reset transaction state", e1);
+            }
         }
         return dbVersion;
     }

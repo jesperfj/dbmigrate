@@ -13,6 +13,7 @@
     <orderEntry type="library" name="Tomcat 5" level="application_server_libraries" />
     <orderEntry type="library" name="junit-4.0" level="application" />
     <orderEntry type="library" name="H2" level="project" />
+    <orderEntry type="library" name="PostgreSQL" level="project" />
     <orderEntryProperties />
   </component>
 </module>

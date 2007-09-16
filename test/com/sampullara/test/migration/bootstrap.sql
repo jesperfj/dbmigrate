@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS db_version;
+DROP TABLE db_version;
