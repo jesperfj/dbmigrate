@@ -32,8 +32,10 @@ public class Migrate {
     private String user;
     @Argument(required = true, description = "The database password")
     private String password;
-    @Argument(required = true, description = "The client version")
+    @Argument(description = "The client version")
     private Integer version;
+    @Argument(description = "Automatically update the database to the latest possible")
+    private Boolean auto = false;
     @Argument(description = "The name of the table within the database to store the db version within")
     private String tablename = "db_version";
     @Argument(required = true, alias = "package", description = "Package within which the database migration scripts/classes are stored")
@@ -134,6 +136,9 @@ public class Migrate {
      * @throws MigrationException Will fail if the migration is unsuccessful
      */
     public boolean migrate() throws MigrationException {
+        if (!auto && version == null) {
+            throw new MigrationException("You must either set a client version or enable auto migration");
+        }
         boolean migrated = false;
         Connection conn = getConnection();
         try {
@@ -164,6 +169,7 @@ public class Migrate {
                     report(dbVersion);
                     migrated = true;
                 } else {
+                    if (auto) break;
                     throw new MigrationException("No migration found: " + dbVersion);
                 }
             }
@@ -339,16 +345,20 @@ public class Migrate {
     }
 
     private boolean needsMigrate(int dbVersion) throws MigrationException {
-        boolean needsMigrate;
-        if (dbVersion == version) {
-            needsMigrate = false;
+        if (auto) {
+            return true;
         } else {
-            if (dbVersion > version) {
-                throw new MigrationException("Client version older than database version: " + version + " < " + dbVersion);
+            boolean needsMigrate;
+            if (dbVersion == version) {
+                needsMigrate = false;
+            } else {
+                if (dbVersion > version) {
+                    throw new MigrationException("Client version older than database version: " + version + " < " + dbVersion);
+                }
+                needsMigrate = true;
             }
-            needsMigrate = true;
+            return needsMigrate;
         }
-        return needsMigrate;
     }
 
     /**

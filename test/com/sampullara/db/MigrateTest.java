@@ -46,6 +46,27 @@ public class MigrateTest extends TestCase {
         }
     }
 
+    public void testAutoMigration() throws MigrationException, IOException {
+        Properties p = new Properties();
+        InputStream is =
+                Thread.currentThread().getContextClassLoader().getResourceAsStream("com/sampullara/db/test.properties");
+        p.load(is);
+        p.put("auto", "true");
+        p.remove("version");
+        
+        Migrate migrate = new Migrate(p);
+        dropTable(migrate);
+
+        // Assert something needs to be done
+        assertTrue(migrate.needsMigrate());
+
+        // Do the migration
+        migrate.migrate();
+
+        // Assert nothing was done since we are auto migrating
+        assertFalse(migrate.migrate());
+    }
+
     public void testMigrationCommandLine() throws MigrationException, IOException {
         Properties p = new Properties();
         InputStream is =
