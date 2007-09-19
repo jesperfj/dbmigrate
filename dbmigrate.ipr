@@ -363,9 +363,6 @@
     <option name="GENERATE_IIOP_STUBS" value="false" />
     <option name="ADDITIONAL_OPTIONS_STRING" value="" />
   </component>
-  <component name="SQLPlugin.ProjectConfiguration">
-    <queries />
-  </component>
   <component name="ScopeChooserConfigurable.UI">
     <option name="proportions">
       <SplitterProportionsDataImpl />

@@ -53,7 +53,7 @@
         <pathelement location="test-classes"/>
     </path>
 
-    <property name="test-db-type" value="mysql"/>
+    <property name="test-db-type" value="h2"/>
 
     <target name="test"
             description="run unit tests.  can optionally set -Dtest-db-type to {mysql, h2}">

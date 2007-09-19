@@ -166,7 +166,7 @@ public class Migrate {
                         databaseSpecificScriptMigration(conn, dbVersion) ||
                         genericClassMigration(conn, dbVersion) ||
                         genericScriptMigration(conn, dbVersion)) {
-                    report(dbVersion);
+                    advanceVersion(dbVersion);
                     migrated = true;
                 } else {
                     if (auto) break;
@@ -251,12 +251,33 @@ public class Migrate {
         return false;
     }
 
-    private void report(int dbVersion) throws MigrationException {
+    private void advanceVersion(int dbVersion) throws MigrationException {
         int newVersion = getDBVersion();
-        if (newVersion <= dbVersion) {
-            throw new MigrationException("Migration failed to increase db version: " + newVersion + " <= " + dbVersion);
+        if (newVersion == dbVersion) {
+            // Auto advance the version
+            Connection conn = getConnection();
+            PreparedStatement ps = null;
+            try {
+                newVersion = dbVersion + 1;
+                ps = conn.prepareStatement("UPDATE " + tablename + " SET version=?");
+                ps.setInt(1, newVersion);
+                int rows = ps.executeUpdate();
+                if (rows != 1) {
+                    throw new MigrationException("Failed to update database version from " + dbVersion + " to " + newVersion);
+                }
+            } catch (SQLException e) {
+                throw new MigrationException("Failed to update database version from " + dbVersion + " to " + (dbVersion + 1), e);
+            } finally {
+                if (ps != null) try {
+                    ps.close();
+                } catch (SQLException e) {
+                    // Ignore failures to close things
+                }
+            }
+            logger.log(Level.INFO, "Automatically incremented database from " + dbVersion + " to " + newVersion);
+        } else {
+            logger.log(Level.INFO, "Manually updated database from " + dbVersion + " to " + newVersion);
         }
-        logger.log(Level.INFO, "Migrated database from " + dbVersion + " to " + newVersion);
     }
 
     private boolean databaseSpecificScriptMigration(Connection conn, int dbVersion) throws MigrationException {
