@@ -302,7 +302,7 @@ public class Migrate {
                 BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
                 String line;
                 while ((line = br.readLine()) != null) {
-                    if (!line.startsWith("#")) {
+                    if (!line.startsWith("#") && !line.startsWith("--")) {
                         sb.append(line);
                         if (!line.endsWith(";")) {
                             sb.append(" ");
