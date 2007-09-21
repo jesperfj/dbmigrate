@@ -3,9 +3,9 @@ package com.sampullara.db;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 
+import javax.sql.DataSource;
 import java.io.*;
 import java.sql.*;
-import javax.sql.DataSource;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -177,10 +177,15 @@ public class Migrate {
         try {
             // Get the current database version and check to make sure we need to do work.
             while (needsMigrate(dbVersion = getDBVersion())) {
-                if (databaseSpecificClassMigration(conn, dbVersion) ||
-                        databaseSpecificScriptMigration(conn, dbVersion) ||
-                        genericClassMigration(conn, dbVersion) ||
-                        genericScriptMigration(conn, dbVersion)) {
+                if (databaseSpecificClassMigrationFrom(conn, dbVersion) ||
+                        databaseSpecificScriptMigrationFrom(conn, dbVersion) ||
+                        genericClassMigrationFrom(conn, dbVersion) ||
+                        genericScriptMigrationFrom(conn, dbVersion) ||
+                        databaseSpecificClassMigrationTo(conn, dbVersion) ||
+                        databaseSpecificScriptMigrationTo(conn, dbVersion) ||
+                        genericClassMigrationTo(conn, dbVersion) ||
+                        genericScriptMigrationTo(conn, dbVersion)
+                        ) {
                     advanceVersion(dbVersion);
                     migrated = true;
                 } else {
@@ -236,17 +241,6 @@ public class Migrate {
         }
     }
 
-    private boolean databaseSpecificClassMigration(Connection conn, int dbVersion) throws MigrationException {
-        String databaseName = getDatabaseName(conn);
-        String className = packageName + "." + databaseName + ".Migrate" + dbVersion;
-        return classMigrator(conn, className);
-    }
-
-    private boolean genericClassMigration(Connection conn, int dbVersion) throws MigrationException {
-        String className = packageName + ".Migrate" + dbVersion;
-        return classMigrator(conn, className);
-    }
-
     private boolean classMigrator(Connection conn, String className) throws MigrationException {
         try {
             Class migratorClass = Class.forName(className);
@@ -295,14 +289,48 @@ public class Migrate {
         }
     }
 
-    private boolean databaseSpecificScriptMigration(Connection conn, int dbVersion) throws MigrationException {
+    private boolean databaseSpecificClassMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
         String databaseName = getDatabaseName(conn);
-        String scriptName = packageName.replace(".", "/") + "/" + databaseName + "/migrate" + dbVersion + ".sql";
+        String className = packageName + "." + databaseName + ".MigrateFrom" + dbVersion;
+        return classMigrator(conn, className);
+    }
+
+    private boolean genericClassMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
+        String className = packageName + ".MigrateFrom" + dbVersion;
+        return classMigrator(conn, className);
+    }
+
+    private boolean databaseSpecificScriptMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
+        String databaseName = getDatabaseName(conn);
+        String scriptName = packageName.replace(".", "/") + "/" + databaseName + "/migratefrom" + dbVersion + ".sql";
         return scriptMigrator(conn, scriptName);
     }
 
-    private boolean genericScriptMigration(Connection conn, int dbVersion) throws MigrationException {
-        String scriptName = packageName.replace(".", "/") + "/" + "migrate" + dbVersion + ".sql";
+    private boolean genericScriptMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
+        String scriptName = packageName.replace(".", "/") + "/" + "migratefrom" + dbVersion + ".sql";
+        return scriptMigrator(conn, scriptName);
+    }
+
+    private boolean databaseSpecificClassMigrationTo(Connection conn, int dbVersion) throws MigrationException {
+        String databaseName = getDatabaseName(conn);
+        String className = packageName + "." + databaseName + ".MigrateTo" + (dbVersion + 1);
+        return classMigrator(conn, className);
+    }
+
+    private boolean genericClassMigrationTo(Connection conn, int dbVersion) throws MigrationException {
+        String className = packageName + ".MigrateTo" + (dbVersion + 1);
+        return classMigrator(conn, className);
+    }
+
+    private boolean databaseSpecificScriptMigrationTo(Connection conn, int dbVersion) throws MigrationException {
+        String databaseName = getDatabaseName(conn);
+        String scriptName =
+                packageName.replace(".", "/") + "/" + databaseName + "/migrateto" + (dbVersion + 1) + ".sql";
+        return scriptMigrator(conn, scriptName);
+    }
+
+    private boolean genericScriptMigrationTo(Connection conn, int dbVersion) throws MigrationException {
+        String scriptName = packageName.replace(".", "/") + "/" + "migrateto" + (dbVersion + 1) + ".sql";
         return scriptMigrator(conn, scriptName);
     }
 
@@ -403,7 +431,7 @@ public class Migrate {
      * @return returns the current version of the database
      * @throws MigrationException Will fail if there is more than one row or the table is lacking a version
      */
-    private int getDBVersion() throws MigrationException {
+    public int getDBVersion() throws MigrationException {
         int dbVersion;
         PreparedStatement ps;
         try {
@@ -456,7 +484,7 @@ public class Migrate {
                     }
                 } else {
                     try {
-                        logger.log(Level.INFO,"Using supplied datasource: " + datasource);
+                        logger.log(Level.INFO, "Using supplied datasource: " + datasource);
                         connection = datasource.getConnection();
                     } catch (SQLException e) {
                         throw new MigrationException("Could not connect to datasource: " + datasource, e);

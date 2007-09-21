@@ -139,6 +139,9 @@ public class MigrateTest extends TestCase {
         // Do the migration
         migrate.migrate();
 
+        // Make sure it worked
+        assertEquals(6, migrate.getDBVersion());
+
         // Assert nothing was done since we are auto migrating
         assertFalse(migrate.migrate());
     }
@@ -172,6 +175,9 @@ public class MigrateTest extends TestCase {
 
         // Do it again
         migrate.migrate();
+
+        // Make sure it worked
+        assertEquals(6, migrate.getDBVersion());
     }
 
     public void testMigrationOutOfSync() throws MigrationException, IOException {
@@ -184,6 +190,9 @@ public class MigrateTest extends TestCase {
 
         // Do the migration
         migrate.migrate();
+
+        // Make sure it worked
+        assertEquals(6, migrate.getDBVersion());
 
         // Get the database out of sync
         Migrate.scriptMigrator(migrate.getConnection(), "com/sampullara/test/migration/outofsync.sql");
@@ -252,5 +261,8 @@ public class MigrateTest extends TestCase {
         thread2.join();
         thread3.join();
         assertEquals(1, migrations);
+
+        // Make sure it worked
+        assertEquals(6, migrate.getDBVersion());
     }
 }
