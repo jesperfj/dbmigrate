@@ -242,6 +242,8 @@ public class Migrate {
     }
 
     private boolean classMigrator(Connection conn, String className) throws MigrationException {
+        // Remove dashes from the classnames
+        className = className.replace("-", "");
         try {
             Class migratorClass = Class.forName(className);
             Migrator migrator;
@@ -252,6 +254,7 @@ public class Migrate {
             } catch (IllegalAccessException e) {
                 throw new MigrationException("Migrator constructor not accessible: " + className, e);
             }
+            logger.info("Using class: " + className);
             migrator.migrate(conn);
             return true;
         } catch (ClassNotFoundException e) {
@@ -337,10 +340,10 @@ public class Migrate {
     /**
      * Pass the database connection and then a script name that will either be in the classpath or relative
      * to the current directory.
-     * 
-     * @param conn The database connection against which to execute the sql statements
+     *
+     * @param conn       The database connection against which to execute the sql statements
      * @param scriptName The name of the file or resource to execute
-     * @return Script found 
+     * @return Script found
      * @throws MigrationException If the script was found but could not be executed to completion.
      */
     public static boolean scriptMigrator(Connection conn, String scriptName) throws MigrationException {
@@ -356,6 +359,7 @@ public class Migrate {
             }
         }
         if (is != null) {
+            logger.info("Using script: " + scriptName);
             // Pull the entire script file into a char buffer
             // Skip lines that start with #
             StringBuilder sb = new StringBuilder();
@@ -469,7 +473,15 @@ public class Migrate {
                             throw new MigrationException("Too many version in table: " + tablename);
                         }
                     } else {
-                        throw new MigrationException("Found version table with no version: " + tablename);
+                        ps.close();
+                        ps = conn.prepareStatement("INSERT INTO " + tablename + " (version) VALUES (?)");
+                        ps.setInt(1, 1);
+                        try {
+                            ps.executeUpdate();
+                        } finally {
+                            ps.close();
+                        }
+                        dbVersion = 1;
                     }
                 } finally {
                     rs.close();
@@ -522,6 +534,8 @@ public class Migrate {
             throw new MigrationException("Could not access driver constructor", e);
         } catch (ClassNotFoundException e) {
             throw new MigrationException("Could not find driver class in classpath: " + driver, e);
+        } catch (Exception e) {
+            throw new MigrationException("Some other failure to connect: " + url + ", " + properties, e);
         }
         return connection;
     }
