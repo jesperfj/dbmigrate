@@ -1,0 +1,43 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>Using dbmigrate with Grails</title>
+</head>
+<body>
+<h1>Using dbmigrate with Grails</h1>
+
+<h2>Installation</h2>
+
+<p>There are two ways to install it. You can either install it within your Grails installation or within your
+    application:</p>
+
+<h3>Grails:</h3>
+<ol>
+    <li>Copy the dbmigration-r*.jar to your GRAILS_HOME/lib directory</li>
+    <li>Copy the scripts in this directory to your GRAILS_HOME/scripts directory</li>
+</ol>
+<h3>Application:</h3>
+<ol>
+    <li>Copy the dbmigration-r*.jar to your APPLICATION_DIR/lib directory</li>
+    <li>Copy the scripts in this directory to your APPLICATION_DIR/scripts directory</li>
+</ol>
+<p>The two scripts can now be executed like this:</p>
+<pre> grails create-migration</pre>
+<p>First this migrates your database to ensure that it is itself up to date. Then it will look at your database (using
+    your datasource configuration) and determines the current version. It
+    then creates a new
+</p>
+<pre> migratefromN.sql</pre>
+<p>script within the grails-app/migrations/[database name] directory. You should then edit that file in order to do your
+change.</p>
+
+<p>If you have no db_version table in the database you should create that table as the first order of business in the
+    initial migration:</p>
+<pre> CREATE TABLE db_version (version integer NOT NULL)</pre>
+<p>Since even that syntax might be database specific I do not have it automatically create it for you.</p>
+<pre> grails migrate</pre>
+<p>This will attempt to automatically advance the configured database (looking at GRAILS_ENV and DataSource.groovy) to
+    the most recent version available.</p>
+</body>
+</html>

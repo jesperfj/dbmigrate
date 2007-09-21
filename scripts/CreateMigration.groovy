@@ -39,10 +39,7 @@ task('createMigration': "Create the next migration in the series") {
     }
 
     profile("create the migration") {
-        def database = ""
-        if (args) {
-            database = args + "/"
-        }
+        def database = migrate.connection.metaData.databaseProductName.toLowerCase() + "/";
         File dir = new File("${basedir}/grails-app/migrations")
         dir.mkdirs();
         int current = migrate.getDBVersion();
