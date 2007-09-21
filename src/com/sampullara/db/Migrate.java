@@ -374,6 +374,32 @@ public class Migrate {
                             sb.append(" ");
                         }
                     }
+                    // Attempt to parse lines as we go.  The parser needs to be far more robust to really work
+                    // in the general case. Unfortunately that means we might have to actually parse the DDL which
+                    // would not be the best since it varies from database to database.  At worse we need to handle
+                    // brackets, parens, quotes, etc.
+                    Matcher matcher = pattern.matcher(sb);
+                    int substring = -1;
+                    while (matcher.find()) {
+                        String sql = matcher.group();
+                        substring += sql.length();
+                        System.out.println(sql);
+                        sql = sql.substring(0, sql.length() - 1).trim();
+                        Statement st = null;
+                        try {
+                            st = conn.createStatement();
+                            st.execute(sql);
+                        } catch (SQLException e) {
+                            throw new MigrationException("Failed to execute SQL line #" + num + ": " + sql, e);
+                        } finally {
+                            if (st != null) try {
+                                st.close();
+                            } catch (SQLException e) {
+                                logger.log(Level.WARNING, "Failed to close statement, might be leaking them", e);
+                            }
+                        }
+                    }
+                    sb.delete(0, substring + 1);
                     num++;
                 }
             } catch (IOException e) {
@@ -387,7 +413,6 @@ public class Migrate {
             }
             // Now we have read the whole script, now we need to parse it.
             Matcher matcher = pattern.matcher(sb);
-            num = 1;
             while (matcher.find()) {
                 String sql = matcher.group();
                 sql = sql.substring(0, sql.length() - 1).trim();
@@ -404,7 +429,6 @@ public class Migrate {
                         logger.log(Level.WARNING, "Failed to close statement, might be leaking them", e);
                     }
                 }
-                num++;
             }
             return true;
         }
@@ -507,7 +531,7 @@ public class Migrate {
         return dbVersion;
     }
 
-    Connection getConnection() throws MigrationException {
+    public Connection getConnection() throws MigrationException {
         try {
             if (connection == null || connection.isClosed()) {
                 if (datasource == null) {
