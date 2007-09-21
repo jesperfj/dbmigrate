@@ -5,6 +5,7 @@ import com.sampullara.cli.Argument;
 
 import java.io.*;
 import java.sql.*;
+import javax.sql.DataSource;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,6 +43,7 @@ public class Migrate {
     private String packageName;
 
     // Internal state
+    private DataSource datasource;
     private Connection connection;
     private Properties properties;
 
@@ -118,6 +120,19 @@ public class Migrate {
         this.url = url;
         this.driver = driver;
         this.properties = properties;
+        this.version = version;
+        this.packageName = packageName;
+    }
+
+    /**
+     * Full API for the migration class
+     *
+     * @param packageName Package of the migration scripts / classes
+     * @param datasource  data source (e.g. from a JNDI lookup)
+     * @param version     Current version of the client classes
+     */
+    public Migrate(String packageName, DataSource datasource, int version) {
+        this.datasource = datasource;
         this.version = version;
         this.packageName = packageName;
     }
@@ -432,11 +447,20 @@ public class Migrate {
     Connection getConnection() throws MigrationException {
         try {
             if (connection == null || connection.isClosed()) {
-                Driver dbdriver = (Driver) Class.forName(driver).newInstance();
-                try {
-                    connection = dbdriver.connect(url, properties);
-                } catch (SQLException e) {
-                    throw new MigrationException("Could not connect to database: " + url, e);
+                if (datasource == null) {
+                    Driver dbdriver = (Driver) Class.forName(driver).newInstance();
+                    try {
+                        connection = dbdriver.connect(url, properties);
+                    } catch (SQLException e) {
+                        throw new MigrationException("Could not connect to database: " + url, e);
+                    }
+                } else {
+                    try {
+                        logger.log(Level.INFO,"Using supplied datasource: " + datasource);
+                        connection = datasource.getConnection();
+                    } catch (SQLException e) {
+                        throw new MigrationException("Could not connect to datasource: " + datasource, e);
+                    }
                 }
             }
         } catch (SQLException e) {
