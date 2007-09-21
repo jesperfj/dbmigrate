@@ -39,7 +39,7 @@ public class Migrate {
     private Boolean auto = false;
     @Argument(description = "The name of the table within the database to store the db version within")
     private String tablename = "db_version";
-    @Argument(required = true, alias = "package", description = "Package within which the database migration scripts/classes are stored")
+    @Argument(required = true, alias = "package", description = "Package or directory within which the database migration scripts/classes are stored")
     private String packageName;
 
     // Internal state
@@ -334,8 +334,27 @@ public class Migrate {
         return scriptMigrator(conn, scriptName);
     }
 
+    /**
+     * Pass the database connection and then a script name that will either be in the classpath or relative
+     * to the current directory.
+     * 
+     * @param conn The database connection against which to execute the sql statements
+     * @param scriptName The name of the file or resource to execute
+     * @return Script found 
+     * @throws MigrationException If the script was found but could not be executed to completion.
+     */
     public static boolean scriptMigrator(Connection conn, String scriptName) throws MigrationException {
         InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(scriptName);
+        if (is == null) {
+            File file = new File(scriptName);
+            if (file.exists()) {
+                try {
+                    is = new BufferedInputStream(new FileInputStream(file));
+                } catch (FileNotFoundException e) {
+                    throw new MigrationException("Found script but it is unreadable: " + file, e);
+                }
+            }
+        }
         if (is != null) {
             // Pull the entire script file into a char buffer
             // Skip lines that start with #
@@ -353,10 +372,14 @@ public class Migrate {
                     }
                     num++;
                 }
-            } catch (FileNotFoundException e) {
-                throw new MigrationException("Script exists but is unreadable: " + scriptName, e);
             } catch (IOException e) {
                 throw new MigrationException(scriptName + ":\n" + sb + "\nFailed to read script at line: " + num, e);
+            } finally {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    // Ignore exceptions on close
+                }
             }
             // Now we have read the whole script, now we need to parse it.
             Matcher matcher = pattern.matcher(sb);
