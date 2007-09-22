@@ -3,9 +3,16 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/dbmigrate/scripts" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/classes" />
+      <excludeFolder url="file://$MODULE_DIR$/dbmigrate/grails-app" />
+      <excludeFolder url="file://$MODULE_DIR$/dbmigrate/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/dbmigrate/scripts" />
+      <excludeFolder url="file://$MODULE_DIR$/dbmigrate/src" />
+      <excludeFolder url="file://$MODULE_DIR$/dbmigrate/test" />
+      <excludeFolder url="file://$MODULE_DIR$/dbmigrate/web-app" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

@@ -9,11 +9,9 @@
 
 <h2>Installation</h2>
 
-<p>The best way to install it is to place it in your Grails installation:</p>
-<ol>
-    <li>Copy the dbmigration-r*.jar to your GRAILS_HOME/lib directory</li>
-    <li>Copy the scripts in this directory to your GRAILS_HOME/scripts directory</li>
-</ol>
+<p>The best way to install it is to use</p>
+<pre> grails install-plugin grails-dbmigrate-0.1.zip</pre>
+<p>to add the functionality to your application.</p>
 <p>The two scripts can now be executed like this:</p>
 <pre> grails create-migration</pre>
 <p>First this migrates your database to ensure that it is itself up to date. Then it will look at your database (using
