@@ -35,10 +35,6 @@ includeTargets << new File("${grailsHome}/scripts/Compile.groovy")
 config = new ConfigObject()
 migrate = null
 
-task('create-next' : "Creates an empty SQL script to be used for migration") {
-    
-}
-
 task('default': "Migrates the current database to the latest") {
     depends(migrate)
 }
@@ -108,6 +104,5 @@ task ('migrate' : "Migrates the current database to the latest") {
             event("StatusFinal", ["Failed to migrate database ${grailsEnv}"])
             exit(1)
         }
-
     }
 }
