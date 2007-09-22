@@ -13,6 +13,8 @@
         <delete dir="docs"/>
         <delete dir="." includes="dbmigration-*.jar"/>
         <delete dir="." includes="dbmigration-*.zip"/>
+        <delete dir="dbmigrate/lib" includes="*.jar"/>
+        <delete dir="dbmigrate/scripts" includes="*.groovy" excludes="_*.groovy"/>
     </target>
 
     <path id="classpath">
