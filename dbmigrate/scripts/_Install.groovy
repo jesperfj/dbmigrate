@@ -12,3 +12,9 @@
 Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
+Ant.delete(dir:"${grailsHome}/lib", includes:"dbmigration*.jar")
+
+Ant.copy(todir:"${grailsHome}/lib") {
+    Ant.fileset(dir:"${pluginBasedir}/lib", includes:"dbmigration*.jar")
+}
+

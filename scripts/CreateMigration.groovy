@@ -27,8 +27,6 @@ grailsAppName = ""
 Ant.property(environment: "env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
-includeTargets << new File("${grailsHome}/scripts/Migrate.groovy")
-
 task('default': "Migrates the current database to the latest") {
     depends(createMigration)
 }
@@ -48,4 +46,73 @@ task('createMigration': "Create the next migration in the series") {
         System.out.println("Created new migration: " + scriptFile)
     }
 
+}
+
+task ('migrate' : "Migrates the current database to the latest") {
+    profile("compiling config") {
+        compile()
+    }
+
+    profile("creating config object") {
+        ClassLoader contextLoader = Thread.currentThread().getContextClassLoader()
+        classLoader = new URLClassLoader([classesDir.toURL()] as URL[], contextLoader)
+        def configSlurper = new ConfigSlurper(grailsEnv)
+        def configFile = new File("${basedir}/grails-app/conf/Config.groovy")
+        if (configFile.exists()) {
+            try {
+
+                config = configSlurper.parse(classLoader.loadClass("Config"))
+                config.setConfigFile(configFile.toURL())
+
+                ConfigurationHolder.setConfig(config)
+            }
+            catch (Exception e) {
+                e.printStackTrace()
+
+                event("StatusFinal", ["Failed to compile configuration file ${configFile}: ${e.message}"])
+                exit(1)
+            }
+
+        }
+        def dataSourceFile = new File("${basedir}/grails-app/conf/DataSource.groovy")
+        if (dataSourceFile.exists()) {
+            try {
+                def dataSourceConfig = configSlurper.parse(classLoader.loadClass("DataSource"))
+                config.merge(dataSourceConfig)
+                ConfigurationHolder.setConfig(config)
+            }
+            catch (Exception e) {
+                e.printStackTrace()
+
+                event("StatusFinal", ["Failed to compile data source file $dataSourceFile: ${e.message}"])
+                exit(1)
+            }
+        }
+        classLoader = contextLoader;
+    }
+
+    profile("automigrate the current database") {
+        Properties p = config.dataSource.toProperties();
+        p.driver = p.driverClassName;
+        p.user = p.username;
+        if (p.password == null) {
+            p.password = ""
+        }
+        p.packageName = "grails-app/migrations"
+        p.auto = "true";
+        migrate = new Migrate(p)
+        try {
+            System.out.println("Migrating ${grailsEnv} database");
+            if (migrate.migrate()) {
+                System.out.println("Database migrated");
+            } else {
+                System.out.println("Database up-to-date");
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace()
+            event("StatusFinal", ["Failed to migrate database ${grailsEnv}"])
+            exit(1)
+        }
+    }
 }

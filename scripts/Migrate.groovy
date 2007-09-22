@@ -79,6 +79,7 @@ task ('migrate' : "Migrates the current database to the latest") {
                 exit(1)
             }
         }
+        classLoader = contextLoader;
     }
 
     profile("automigrate the current database") {
