@@ -100,7 +100,8 @@ task ('migrate' : "Migrates the current database to the latest") {
         }
         p.packageName = "grails-app/migrations"
         p.auto = "true";
-        migrate = new Migrate(p)
+        def migrateClass = classLoader.loadClass("com.sampullara.db.Migrate")
+        migrate = migrateClass.getConstructor(Properties.class).newInstance(p);
         try {
             System.out.println("Migrating ${grailsEnv} database");
             if (migrate.migrate()) {
