@@ -4,7 +4,7 @@
   -->
 
 <project name="dbmigration" default="all">
-    <target name="all" depends="clean,compile,jar,docs,test,dist"/>
+    <target name="all" depends="clean,compile,jar,plugin,docs,test,dist"/>
 
     <target name="clean">
         <delete dir="classes"/>
@@ -78,9 +78,10 @@
         </junit>
     </target>
 
-    <target name="dist" depends="jar,docs">
+    <target name="dist" depends="jar,plugin,docs">
         <zip destfile="dbmigration-r${info.entry.commit(revision)}.zip">
-            <zipfileset dir="." includes="*.jar"/>
+            <zipfileset dir="." includes="dbmigration*.jar"/>
+            <zipfileset dir="." includes="grails*.zip"/>
             <zipfileset prefix="docs" dir="docs"/>
             <zipfileset prefix="test" dir="test"/>
         </zip>
