@@ -31,7 +31,7 @@
         </copy>
     </target>
 
-    <target name="jar">
+    <target name="jar" depends="compile">
         <exec executable="svn" output="svninfo">
             <arg value="info"/>
             <arg value="--xml"/>
@@ -86,7 +86,7 @@
         </zip>
     </target>
 
-    <target name="plugin" depends="jar">
+    <target name="plugin" depends="clean,jar">
         <copy todir="dbmigrate/scripts">
             <fileset dir="scripts" includes="*.groovy"/>
         </copy>
