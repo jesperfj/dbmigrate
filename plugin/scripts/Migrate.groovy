@@ -88,7 +88,7 @@ task ('migrate' : "Migrates the current database to the latest") {
         if (p.password == null) {
             p.password = ""
         }
-        p.packageName = "grails-app/migrations"
+        p.packageName = "grails-app.migrations"
         p.auto = "true";
         def migrateClass = classLoader.loadClass("com.sampullara.db.Migrate")
         migrate = migrateClass.getConstructor(Properties.class).newInstance(p);

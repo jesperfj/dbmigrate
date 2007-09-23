@@ -7,6 +7,7 @@
     <target name="all" depends="clean,compile,jar,plugin,docs,test,dist"/>
 
     <target name="clean">
+        <delete dir="out"/>
         <delete dir="classes"/>
         <delete dir="test-classes"/>
         <delete dir="test-output"/>
@@ -88,7 +89,7 @@
     </target>
 
     <target name="plugin" depends="clean,jar">
-        <exec executable="grails" dir="dbmigrate">
+        <exec executable="grails">
             <arg value="create-plugin"/>
             <arg value="dbmigrate"/>
         </exec>

@@ -25,13 +25,13 @@ public class Migrate {
     public static final Logger logger = Logger.getLogger("com.sampullara.db.Migrate");
 
     // Properties
-    @Argument(required = true, description = "The database URL")
+    @Argument(description = "The database URL")
     private String url;
-    @Argument(required = true, description = "The database driver classname")
+    @Argument(description = "The database driver classname")
     private String driver;
-    @Argument(required = true, description = "The database user")
+    @Argument(description = "The database user")
     private String user;
-    @Argument(required = true, description = "The database password")
+    @Argument(description = "The database password")
     private String password;
     @Argument(description = "The client version")
     private Integer version;
@@ -135,6 +135,17 @@ public class Migrate {
         this.datasource = datasource;
         this.version = version;
         this.packageName = packageName;
+    }
+
+    /**
+     * Full API for the migration class
+     * @param p Additional non-datasource related properties
+     * @param datasource The datasource used to connect to the database
+     */
+    public Migrate(Properties p, DataSource datasource) {
+        Args.parse(this, p);
+        this.properties = p;
+        this.datasource = datasource;
     }
 
     /**
