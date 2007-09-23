@@ -88,8 +88,12 @@
     </target>
 
     <target name="plugin" depends="clean,jar">
-        <copy todir="dbmigrate/scripts">
-            <fileset dir="scripts" includes="*.groovy"/>
+        <exec executable="grails" dir="dbmigrate">
+            <arg value="create-plugin"/>
+            <arg value="dbmigrate"/>
+        </exec>
+        <copy todir="dbmigrate">
+            <fileset dir="plugin"/>
         </copy>
         <copy todir="dbmigrate/lib">
             <fileset dir="." includes="dbmigration-r${info.entry.commit(revision)}.jar"/>
@@ -100,6 +104,7 @@
         <move todir=".">
             <fileset dir="dbmigrate" includes="*.zip"/>
         </move>
+        <delete dir="dbmigrate"/>
     </target>
 
 </project>
