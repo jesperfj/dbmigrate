@@ -87,6 +87,11 @@ public class Migrate {
     public Migrate(String[] args) {
         try {
             Args.parse(this, args);
+            if (url == null) throw new IllegalArgumentException("You must specify a URL");
+            if (user == null) throw new IllegalArgumentException("You must specify a user");
+            if (password == null) throw new IllegalArgumentException("You must specify a password");
+            if (driver == null) throw new IllegalArgumentException("You must specify a driver");
+            if (!auto && version == null) throw new IllegalArgumentException("You must specify auto or a version"); 
         } catch (IllegalArgumentException iae) {
             System.err.println(iae);
             Args.usage(this);
@@ -104,6 +109,11 @@ public class Migrate {
      */
     public Migrate(Properties p) {
         Args.parse(this, p);
+        if (url == null) throw new IllegalArgumentException("You must specify a URL");
+        if (user == null) throw new IllegalArgumentException("You must specify a user");
+        if (password == null) throw new IllegalArgumentException("You must specify a password");
+        if (driver == null) throw new IllegalArgumentException("You must specify a driver");
+        if (!auto && version == null) throw new IllegalArgumentException("You must specify auto or a version");
         this.properties = p;
     }
 
@@ -160,6 +170,7 @@ public class Migrate {
      * </ol>
      *
      * @throws MigrationException Will fail if the migration is unsuccessful
+     * @return Returns true if a migration occurred
      */
     public boolean migrate() throws MigrationException {
         if (!auto && version == null) {

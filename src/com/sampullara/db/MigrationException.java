@@ -1,11 +1,11 @@
 package com.sampullara.db;
 
 /**
- * Created by IntelliJ IDEA.
+ * Generic migration exception
+ * 
  * User: sam
  * Date: Sep 8, 2007
  * Time: 1:07:59 PM
- * To change this template use File | Settings | File Templates.
  */
 public class MigrationException extends Exception {
     public MigrationException() {

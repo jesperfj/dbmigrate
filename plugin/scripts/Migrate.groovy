@@ -1,4 +1,4 @@
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
+//import org.codehaus.groovy.grails.commons.ConfigurationHolder
 
 /*
 * Copyright 2004-2005 the original author or authors.
@@ -54,7 +54,7 @@ task ('migrate' : "Migrates the current database to the latest") {
                 config = configSlurper.parse(classLoader.loadClass("Config"))
                 config.setConfigFile(configFile.toURL())
 
-                ConfigurationHolder.setConfig(config)
+//                ConfigurationHolder.setConfig(config)
             }
             catch (Exception e) {
                 e.printStackTrace()
@@ -69,7 +69,7 @@ task ('migrate' : "Migrates the current database to the latest") {
             try {
                 def dataSourceConfig = configSlurper.parse(classLoader.loadClass("DataSource"))
                 config.merge(dataSourceConfig)
-                ConfigurationHolder.setConfig(config)
+//                ConfigurationHolder.setConfig(config)
             }
             catch (Exception e) {
                 e.printStackTrace()
