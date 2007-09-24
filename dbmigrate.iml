@@ -28,6 +28,15 @@
     <orderEntry type="library" name="H2" level="project" />
     <orderEntry type="library" name="PostgreSQL" level="project" />
     <orderEntry type="library" name="GROOVY" level="application" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/GSQL-1.1-SNAPSHOT.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntryProperties />
   </component>
 </module>

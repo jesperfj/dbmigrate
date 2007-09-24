@@ -116,7 +116,7 @@ public class MigrateTest extends TestCase {
 
     private void dropTable(Migrate migrate) {
         try {
-            Migrate.scriptMigrator(migrate.getConnection(), "com/sampullara/test/migration/bootstrap.sql");
+            Migrate.sqlScriptMigrator(migrate.getConnection(), "com/sampullara/test/migration/bootstrap.sql");
         } catch (MigrationException me) {
             // Ignore if the drop table is unsuccessful
         }
@@ -220,7 +220,7 @@ public class MigrateTest extends TestCase {
         assertEquals(6, migrate.getDBVersion());
 
         // Get the database out of sync
-        Migrate.scriptMigrator(migrate.getConnection(), "com/sampullara/test/migration/outofsync.sql");
+        Migrate.sqlScriptMigrator(migrate.getConnection(), "com/sampullara/test/migration/outofsync.sql");
 
         // Expect an exception
         try {

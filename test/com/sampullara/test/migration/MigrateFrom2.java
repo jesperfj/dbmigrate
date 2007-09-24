@@ -17,6 +17,6 @@ import java.util.logging.Level;
 public class MigrateFrom2 implements Migrator {
     public void migrate(Connection conn) throws MigrationException {
         Migrate.logger.log(Level.INFO, "Running the migration class rather than the script directly");
-        Migrate.scriptMigrator(conn, "com/sampullara/test/migration/migratefrom2.sql");
+        Migrate.sqlScriptMigrator(conn, "com/sampullara/test/migration/migratefrom2.sql");
     }
 }

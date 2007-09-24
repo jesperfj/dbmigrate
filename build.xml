@@ -65,6 +65,7 @@
         <javac srcdir="test" destdir="test-classes" classpathref="test.classpath"/>
         <copy todir="test-classes">
             <fileset dir="test" includes="**/*.sql"/>
+            <fileset dir="test" includes="**/*.groovy"/>
         </copy>
         <copy tofile="test-classes/com/sampullara/db/test.properties"
 			  file="test/com/sampullara/db/${test-db-type}.test.properties"/>

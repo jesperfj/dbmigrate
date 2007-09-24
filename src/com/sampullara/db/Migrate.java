@@ -2,6 +2,9 @@ package com.sampullara.db;
 
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
+import groovy.lang.Binding;
+import groovy.lang.GroovyClassLoader;
+import groovy.lang.Script;
 
 import javax.sql.DataSource;
 import java.io.*;
@@ -91,7 +94,7 @@ public class Migrate {
             if (user == null) throw new IllegalArgumentException("You must specify a user");
             if (password == null) throw new IllegalArgumentException("You must specify a password");
             if (driver == null) throw new IllegalArgumentException("You must specify a driver");
-            if (!auto && version == null) throw new IllegalArgumentException("You must specify auto or a version"); 
+            if (!auto && version == null) throw new IllegalArgumentException("You must specify auto or a version");
         } catch (IllegalArgumentException iae) {
             System.err.println(iae);
             Args.usage(this);
@@ -149,7 +152,8 @@ public class Migrate {
 
     /**
      * Full API for the migration class
-     * @param p Additional non-datasource related properties
+     *
+     * @param p          Additional non-datasource related properties
      * @param datasource The datasource used to connect to the database
      */
     public Migrate(Properties p, DataSource datasource) {
@@ -169,8 +173,8 @@ public class Migrate {
      * <li>If class in 3 not found, use a generic migration script: pacakge dir + "/migrate" + dbVersion + ".sql"</li>
      * </ol>
      *
-     * @throws MigrationException Will fail if the migration is unsuccessful
      * @return Returns true if a migration occurred
+     * @throws MigrationException Will fail if the migration is unsuccessful
      */
     public boolean migrate() throws MigrationException {
         if (!auto && version == null) {
@@ -200,13 +204,17 @@ public class Migrate {
             // Get the current database version and check to make sure we need to do work.
             while (needsMigrate(dbVersion = getDBVersion())) {
                 if (databaseSpecificClassMigrationFrom(conn, dbVersion) ||
-                        databaseSpecificScriptMigrationFrom(conn, dbVersion) ||
-                        genericClassMigrationFrom(conn, dbVersion) ||
-                        genericScriptMigrationFrom(conn, dbVersion) ||
+                        databaseSpecificSQLScriptMigrationFrom(conn, dbVersion) ||
+                        databaseSpecificGroovyMigrationFrom(conn, dbVersion) ||
                         databaseSpecificClassMigrationTo(conn, dbVersion) ||
-                        databaseSpecificScriptMigrationTo(conn, dbVersion) ||
+                        databaseSpecificSQLScriptMigrationTo(conn, dbVersion) ||
+                        databaseSpecificGroovyMigrationTo(conn, dbVersion) ||
+                        genericClassMigrationFrom(conn, dbVersion) ||
+                        genericSQLScriptMigrationFrom(conn, dbVersion) ||
+                        genericGroovyMigrationFrom(conn, dbVersion) ||
                         genericClassMigrationTo(conn, dbVersion) ||
-                        genericScriptMigrationTo(conn, dbVersion)
+                        genericSQLScriptMigrationTo(conn, dbVersion) ||
+                        genericGroovyMigrationTo(conn, dbVersion)
                         ) {
                     advanceVersion(dbVersion);
                     migrated = true;
@@ -325,17 +333,6 @@ public class Migrate {
         return classMigrator(conn, className);
     }
 
-    private boolean databaseSpecificScriptMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
-        String databaseName = getDatabaseName(conn);
-        String scriptName = packageName.replace(".", "/") + "/" + databaseName + "/migratefrom" + dbVersion + ".sql";
-        return scriptMigrator(conn, scriptName);
-    }
-
-    private boolean genericScriptMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
-        String scriptName = packageName.replace(".", "/") + "/" + "migratefrom" + dbVersion + ".sql";
-        return scriptMigrator(conn, scriptName);
-    }
-
     private boolean databaseSpecificClassMigrationTo(Connection conn, int dbVersion) throws MigrationException {
         String databaseName = getDatabaseName(conn);
         String className = packageName + "." + databaseName + ".MigrateTo" + (dbVersion + 1);
@@ -347,16 +344,88 @@ public class Migrate {
         return classMigrator(conn, className);
     }
 
-    private boolean databaseSpecificScriptMigrationTo(Connection conn, int dbVersion) throws MigrationException {
+    private boolean databaseSpecificSQLScriptMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
+        String databaseName = getDatabaseName(conn);
+        String scriptName = packageName.replace(".", "/") + "/" + databaseName + "/migratefrom" + dbVersion + ".sql";
+        return sqlScriptMigrator(conn, scriptName);
+    }
+
+    private boolean genericSQLScriptMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
+        String scriptName = packageName.replace(".", "/") + "/" + "migratefrom" + dbVersion + ".sql";
+        return sqlScriptMigrator(conn, scriptName);
+    }
+
+    private boolean databaseSpecificSQLScriptMigrationTo(Connection conn, int dbVersion) throws MigrationException {
         String databaseName = getDatabaseName(conn);
         String scriptName =
                 packageName.replace(".", "/") + "/" + databaseName + "/migrateto" + (dbVersion + 1) + ".sql";
+        return sqlScriptMigrator(conn, scriptName);
+    }
+
+    private boolean genericSQLScriptMigrationTo(Connection conn, int dbVersion) throws MigrationException {
+        String scriptName = packageName.replace(".", "/") + "/" + "migrateto" + (dbVersion + 1) + ".sql";
+        return sqlScriptMigrator(conn, scriptName);
+    }
+
+    private boolean databaseSpecificGroovyMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
+        String databaseName = getDatabaseName(conn);
+        String scriptName = packageName.replace(".", "/") + "/" + databaseName + "/migratefrom" + dbVersion + ".groovy";
         return scriptMigrator(conn, scriptName);
     }
 
-    private boolean genericScriptMigrationTo(Connection conn, int dbVersion) throws MigrationException {
-        String scriptName = packageName.replace(".", "/") + "/" + "migrateto" + (dbVersion + 1) + ".sql";
+    private boolean genericGroovyMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
+        String scriptName = packageName.replace(".", "/") + "/" + "migratefrom" + dbVersion + ".groovy";
         return scriptMigrator(conn, scriptName);
+    }
+
+    private boolean databaseSpecificGroovyMigrationTo(Connection conn, int dbVersion) throws MigrationException {
+        String databaseName = getDatabaseName(conn);
+        String scriptName =
+                packageName.replace(".", "/") + "/" + databaseName + "/migrateto" + (dbVersion + 1) + ".groovy";
+        return scriptMigrator(conn, scriptName);
+    }
+
+    private boolean genericGroovyMigrationTo(Connection conn, int dbVersion) throws MigrationException {
+        String scriptName = packageName.replace(".", "/") + "/" + "migrateto" + (dbVersion + 1) + ".groovy";
+        return scriptMigrator(conn, scriptName);
+    }
+
+    private boolean scriptMigrator(Connection conn, String scriptName) throws MigrationException {
+        File file = new File(scriptName);
+        InputStream is;
+        if (file.exists()) {
+            try {
+                is = new FileInputStream(file);
+            } catch (FileNotFoundException e) {
+                throw new MigrationException("Found script but could not read it");
+            }
+        } else {
+            is = Thread.currentThread().getContextClassLoader().getResourceAsStream(scriptName);
+        }
+
+        if (is != null) {
+            ClassLoader parent = Thread.currentThread().getContextClassLoader();
+            GroovyClassLoader loader = new GroovyClassLoader(parent);
+            try {
+                Class groovyClass = loader.parseClass(is);
+                Binding binding = new Binding();
+                Script script = (Script) groovyClass.newInstance();
+                binding.setProperty("connection", conn);
+                binding.setProperty("database", getDatabaseName(conn));
+                binding.setProperty("version", getDBVersion());
+                binding.setProperty("tablename", tablename);
+                script.setBinding(binding);
+                script.run();
+                return true;
+            } catch (IllegalAccessException e) {
+                throw new MigrationException("Could not access constructor for script", e);
+            } catch (InstantiationException e) {
+                throw new MigrationException("Could not instantiate script", e);
+
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -368,7 +437,7 @@ public class Migrate {
      * @return Script found
      * @throws MigrationException If the script was found but could not be executed to completion.
      */
-    public static boolean scriptMigrator(Connection conn, String scriptName) throws MigrationException {
+    public static boolean sqlScriptMigrator(Connection conn, String scriptName) throws MigrationException {
         InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(scriptName);
         if (is == null) {
             File file = new File(scriptName);
@@ -382,8 +451,8 @@ public class Migrate {
         }
         if (is != null) {
             logger.info("Using script: " + scriptName);
-            // Pull the entire script file into a char buffer
-            // Skip lines that start with #
+// Pull the entire script file into a char buffer
+// Skip lines that start with #
             StringBuilder sb = new StringBuilder();
             int num = 1;
             try {
@@ -539,7 +608,7 @@ public class Migrate {
             // We are going to have to make an assumption that the database exists but there is no current
             // database version and use the migrate0 script.
             dbVersion = 0;
-            // We should reset the connection state at this point
+// We should reset the connection state at this point
             Connection conn = getConnection();
             try {
                 if (!conn.getAutoCommit()) {
