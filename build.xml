@@ -89,7 +89,7 @@
         </zip>
     </target>
 
-    <target name="plugin" depends="clean,jar">
+    <target name="create-plugin" depends="clean,jar">
         <exec executable="grails">
             <arg value="create-plugin"/>
             <arg value="dbmigrate"/>
@@ -109,4 +109,14 @@
         <delete dir="dbmigrate"/>
     </target>
 
+    <target name="plugin" depends="create-plugin">
+        <delete dir="dbmigrate"/>
+    </target>
+
+    <target name="release-plugin" depends="create-plugin">
+        <exec executable="grails" dir="dbmigrate">
+            <arg value="release-plugin"/>
+        </exec>
+        <delete dir="dbmigrate"/>
+    </target>
 </project>

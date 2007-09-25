@@ -28,7 +28,7 @@ Ant.property(environment: "env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
 pluginHome = new File("./plugins").listFiles().find {
-it.name.startsWith('dbmigrate-')}
+    it.name.startsWith('dbmigrate-')}
 includeTargets << new File("${pluginHome}/scripts/Migrate.groovy")
 
 task('default': "Migrates the current database to the latest") {
@@ -41,12 +41,16 @@ task('createMigration': "Create the next migration in the series") {
     }
 
     profile("create the migration") {
-        def database = migrate.connection.metaData.databaseProductName.toLowerCase() + "/";
-        File dir = new File("${basedir}/grails-app/migrations")
+        def database = migrate.getDatabaseName(migrate.connection);
+        File dir = new File("${basedir}/grails-app/migrations/${database}")
         dir.mkdirs();
         int current = migrate.getDBVersion();
-        File scriptFile = new File(dir, "${database}migratefrom${current}.sql")
+        File scriptFile = new File(dir, "migratefrom${current}.sql")
         scriptFile << "# Migration from version ${current}\n"
+        if (current == 0) {
+            scriptFile << "CREATE TABLE db_version (version integer NOT NULL);\n"
+            scriptFile << "INSERT INTO db_version VALUES (1);\n"
+        }
         System.out.println("Created new migration: " + scriptFile)
     }
 

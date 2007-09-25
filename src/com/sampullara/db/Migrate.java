@@ -526,10 +526,11 @@ public class Migrate {
         return false;
     }
 
-    private String getDatabaseName(Connection conn) throws MigrationException {
+    public String getDatabaseName(Connection conn) throws MigrationException {
         String databaseName;
         try {
             databaseName = conn.getMetaData().getDatabaseProductName();
+            databaseName = databaseName.trim().replaceAll("[ -._/=+]", "");
         } catch (SQLException e) {
             throw new MigrationException("Could not get database name", e);
         }
