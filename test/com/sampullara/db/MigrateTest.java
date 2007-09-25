@@ -127,8 +127,7 @@ public class MigrateTest extends TestCase {
         InputStream is =
                 Thread.currentThread().getContextClassLoader().getResourceAsStream("com/sampullara/db/test.properties");
         p.load(is);
-        p.put("auto", "true");
-        p.remove("version");
+        p.put("version", "2");
 
         Migrate migrate = new Migrate(p);
         dropTable(migrate);
@@ -137,6 +136,15 @@ public class MigrateTest extends TestCase {
         assertTrue(migrate.needsMigrate());
 
         // Do the migration
+        migrate.migrate();
+
+        // Make sure it worked
+        assertEquals(2, migrate.getDBVersion());
+
+        // Now turn on auto and migrate
+        p.remove("version");
+        p.put("auto", "true");
+        migrate = new Migrate(p);
         migrate.migrate();
 
         // Make sure it worked
