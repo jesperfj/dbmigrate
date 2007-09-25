@@ -96,7 +96,7 @@ public class Migrate {
             if (driver == null) throw new IllegalArgumentException("You must specify a driver");
             if (!auto && version == null) throw new IllegalArgumentException("You must specify auto or a version");
         } catch (IllegalArgumentException iae) {
-            System.err.println(iae);
+            logger.severe("Failed to instantiate migrate: " + iae);
             Args.usage(this);
             throw iae;
         }
@@ -474,7 +474,6 @@ public class Migrate {
                     while (matcher.find()) {
                         String sql = matcher.group();
                         substring += sql.length();
-                        System.out.println(sql);
                         sql = sql.substring(0, sql.length() - 1).trim();
                         Statement st = null;
                         try {
