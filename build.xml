@@ -89,34 +89,18 @@
         </zip>
     </target>
 
-    <target name="create-plugin" depends="clean,jar">
-        <exec executable="grails">
-            <arg value="create-plugin"/>
-            <arg value="dbmigrate"/>
-        </exec>
-        <copy todir="dbmigrate">
+    <target name="plugin" depends="clean,jar">
+        <copy todir="checkout/dbmigrate" overwrite="true">
             <fileset dir="plugin"/>
         </copy>
-        <copy todir="dbmigrate/lib">
+        <copy todir="checkout/dbmigrate/lib">
             <fileset dir="." includes="dbmigration-r${info.entry.commit(revision)}.jar"/>
         </copy>
-        <exec executable="grails" dir="dbmigrate">
+        <exec executable="grails" dir="checkout/dbmigrate">
             <arg value="package-plugin"/>
         </exec>
         <move todir=".">
-            <fileset dir="dbmigrate" includes="*.zip"/>
+            <fileset dir="checkout/dbmigrate" includes="*.zip"/>
         </move>
-        <delete dir="dbmigrate"/>
-    </target>
-
-    <target name="plugin" depends="create-plugin">
-        <delete dir="dbmigrate"/>
-    </target>
-
-    <target name="release-plugin" depends="create-plugin">
-        <exec executable="grails" dir="dbmigrate">
-            <arg value="release-plugin"/>
-        </exec>
-        <delete dir="dbmigrate"/>
     </target>
 </project>
