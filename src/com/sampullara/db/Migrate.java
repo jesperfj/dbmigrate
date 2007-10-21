@@ -56,13 +56,15 @@ public class Migrate {
 
     static {
         db = new Properties();
-        InputStream is =
-                Thread.currentThread().getContextClassLoader().getResourceAsStream("com/sampullara/db/db.properties");
+        InputStream is = getResourceAsStream("com/sampullara/db/db.properties");
+        if (is == null) {
+            throw new RuntimeException("Failed to initialize migration, no db.properties found");
+        }
         try {
             db.load(is);
             is.close();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to initialize migration, no db.properties found", e);
+            throw new RuntimeException("Failed to initialize migration, could not read db.properties", e);
         }
     }
 
@@ -83,6 +85,21 @@ public class Migrate {
     }
 
     /**
+     * Bean version, used for Ant
+     */
+    public Migrate() {
+    }
+
+    /**
+     * Also used to support using this as an Ant task
+     * @throws MigrationException on failure to migrate
+     */
+    public void execute() throws MigrationException {
+        checkConfig();
+        migrate();
+    }
+
+    /**
      * Command line version
      *
      * @param args Command line to do the migration
@@ -90,19 +107,24 @@ public class Migrate {
     public Migrate(String[] args) {
         try {
             Args.parse(this, args);
-            if (url == null) throw new IllegalArgumentException("You must specify a URL");
-            if (user == null) throw new IllegalArgumentException("You must specify a user");
-            if (password == null) throw new IllegalArgumentException("You must specify a password");
-            if (driver == null) throw new IllegalArgumentException("You must specify a driver");
-            if (!auto && version == null) throw new IllegalArgumentException("You must specify auto or a version");
+            checkConfig();
         } catch (IllegalArgumentException iae) {
             logger.severe("Failed to instantiate migrate: " + iae);
             Args.usage(this);
             throw iae;
         }
         properties = new Properties();
-        properties.put("user", user);
-        properties.put("password", password);
+        properties.put("user", getUser());
+        properties.put("password", getPassword());
+    }
+
+    private void checkConfig() {
+        if (getUrl() == null) throw new IllegalArgumentException("You must specify a URL");
+        if (getUser() == null) throw new IllegalArgumentException("You must specify a user");
+        if (getPassword() == null) throw new IllegalArgumentException("You must specify a password");
+        if (getDriver() == null) throw new IllegalArgumentException("You must specify a driver");
+        if (!getAuto() && getVersion() == null)
+            throw new IllegalArgumentException("You must specify auto or a version");
     }
 
     /**
@@ -112,11 +134,7 @@ public class Migrate {
      */
     public Migrate(Properties p) {
         Args.parse(this, p);
-        if (url == null) throw new IllegalArgumentException("You must specify a URL");
-        if (user == null) throw new IllegalArgumentException("You must specify a user");
-        if (password == null) throw new IllegalArgumentException("You must specify a password");
-        if (driver == null) throw new IllegalArgumentException("You must specify a driver");
-        if (!auto && version == null) throw new IllegalArgumentException("You must specify auto or a version");
+        checkConfig();
         this.properties = p;
     }
 
@@ -130,11 +148,11 @@ public class Migrate {
      * @param properties  Database connection properties
      */
     public Migrate(String packageName, String url, String driver, int version, Properties properties) {
-        this.url = url;
-        this.driver = driver;
+        this.setUrl(url);
+        this.setDriver(driver);
         this.properties = properties;
-        this.version = version;
-        this.packageName = packageName;
+        this.setVersion(version);
+        this.setPackage(packageName);
     }
 
     /**
@@ -146,8 +164,8 @@ public class Migrate {
      */
     public Migrate(String packageName, DataSource datasource, int version) {
         this.datasource = datasource;
-        this.version = version;
-        this.packageName = packageName;
+        this.setVersion(version);
+        this.setPackage(packageName);
     }
 
     /**
@@ -177,7 +195,7 @@ public class Migrate {
      * @throws MigrationException Will fail if the migration is unsuccessful
      */
     public boolean migrate() throws MigrationException {
-        if (!auto && version == null) {
+        if (!getAuto() && getVersion() == null) {
             throw new MigrationException("You must either set a client version or enable auto migration");
         }
         boolean migrated = false;
@@ -219,7 +237,7 @@ public class Migrate {
                     advanceVersion(dbVersion);
                     migrated = true;
                 } else {
-                    if (auto) break;
+                    if (getAuto()) break;
                     throw new MigrationException("No migration found: " + dbVersion);
                 }
             }
@@ -249,7 +267,7 @@ public class Migrate {
             String lockSQL = (String) db.get("lock_" + dbname);
             if (lockSQL != null) {
                 Statement st = conn.createStatement();
-                lockSQL = lockSQL.replace(":table", tablename);
+                lockSQL = lockSQL.replace(":table", getTablename());
                 st.execute(lockSQL);
             }
         } catch (SQLException e) {
@@ -263,7 +281,7 @@ public class Migrate {
             String unlockSQL = (String) db.get("unlock_" + dbname);
             if (unlockSQL != null) {
                 Statement st = conn.createStatement();
-                unlockSQL = unlockSQL.replace(":table", tablename);
+                unlockSQL = unlockSQL.replace(":table", getTablename());
                 st.execute(unlockSQL);
             }
         } catch (SQLException e) {
@@ -301,7 +319,7 @@ public class Migrate {
             PreparedStatement ps = null;
             try {
                 newVersion = dbVersion + 1;
-                ps = conn.prepareStatement("UPDATE " + tablename + " SET version=?");
+                ps = conn.prepareStatement("UPDATE " + getTablename() + " SET version=?");
                 ps.setInt(1, newVersion);
                 int rows = ps.executeUpdate();
                 if (rows != 1) {
@@ -324,69 +342,70 @@ public class Migrate {
 
     private boolean databaseSpecificClassMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
         String databaseName = getDatabaseName(conn);
-        String className = packageName + "." + databaseName + ".MigrateFrom" + dbVersion;
+        String className = getPackage() + "." + databaseName + ".MigrateFrom" + dbVersion;
         return classMigrator(conn, className);
     }
 
     private boolean genericClassMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
-        String className = packageName + ".MigrateFrom" + dbVersion;
+        String className = getPackage() + ".MigrateFrom" + dbVersion;
         return classMigrator(conn, className);
     }
 
     private boolean databaseSpecificClassMigrationTo(Connection conn, int dbVersion) throws MigrationException {
         String databaseName = getDatabaseName(conn);
-        String className = packageName + "." + databaseName + ".MigrateTo" + (dbVersion + 1);
+        String className = getPackage() + "." + databaseName + ".MigrateTo" + (dbVersion + 1);
         return classMigrator(conn, className);
     }
 
     private boolean genericClassMigrationTo(Connection conn, int dbVersion) throws MigrationException {
-        String className = packageName + ".MigrateTo" + (dbVersion + 1);
+        String className = getPackage() + ".MigrateTo" + (dbVersion + 1);
         return classMigrator(conn, className);
     }
 
     private boolean databaseSpecificSQLScriptMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
         String databaseName = getDatabaseName(conn);
-        String scriptName = packageName.replace(".", "/") + "/" + databaseName + "/migratefrom" + dbVersion + ".sql";
+        String scriptName = getPackage().replace(".", "/") + "/" + databaseName + "/migratefrom" + dbVersion + ".sql";
         return sqlScriptMigrator(conn, scriptName);
     }
 
     private boolean genericSQLScriptMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
-        String scriptName = packageName.replace(".", "/") + "/" + "migratefrom" + dbVersion + ".sql";
+        String scriptName = getPackage().replace(".", "/") + "/" + "migratefrom" + dbVersion + ".sql";
         return sqlScriptMigrator(conn, scriptName);
     }
 
     private boolean databaseSpecificSQLScriptMigrationTo(Connection conn, int dbVersion) throws MigrationException {
         String databaseName = getDatabaseName(conn);
         String scriptName =
-                packageName.replace(".", "/") + "/" + databaseName + "/migrateto" + (dbVersion + 1) + ".sql";
+                getPackage().replace(".", "/") + "/" + databaseName + "/migrateto" + (dbVersion + 1) + ".sql";
         return sqlScriptMigrator(conn, scriptName);
     }
 
     private boolean genericSQLScriptMigrationTo(Connection conn, int dbVersion) throws MigrationException {
-        String scriptName = packageName.replace(".", "/") + "/" + "migrateto" + (dbVersion + 1) + ".sql";
+        String scriptName = getPackage().replace(".", "/") + "/" + "migrateto" + (dbVersion + 1) + ".sql";
         return sqlScriptMigrator(conn, scriptName);
     }
 
     private boolean databaseSpecificGroovyMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
         String databaseName = getDatabaseName(conn);
-        String scriptName = packageName.replace(".", "/") + "/" + databaseName + "/migratefrom" + dbVersion + ".groovy";
+        String scriptName =
+                getPackage().replace(".", "/") + "/" + databaseName + "/migratefrom" + dbVersion + ".groovy";
         return scriptMigrator(conn, scriptName);
     }
 
     private boolean genericGroovyMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
-        String scriptName = packageName.replace(".", "/") + "/" + "migratefrom" + dbVersion + ".groovy";
+        String scriptName = getPackage().replace(".", "/") + "/" + "migratefrom" + dbVersion + ".groovy";
         return scriptMigrator(conn, scriptName);
     }
 
     private boolean databaseSpecificGroovyMigrationTo(Connection conn, int dbVersion) throws MigrationException {
         String databaseName = getDatabaseName(conn);
         String scriptName =
-                packageName.replace(".", "/") + "/" + databaseName + "/migrateto" + (dbVersion + 1) + ".groovy";
+                getPackage().replace(".", "/") + "/" + databaseName + "/migrateto" + (dbVersion + 1) + ".groovy";
         return scriptMigrator(conn, scriptName);
     }
 
     private boolean genericGroovyMigrationTo(Connection conn, int dbVersion) throws MigrationException {
-        String scriptName = packageName.replace(".", "/") + "/" + "migrateto" + (dbVersion + 1) + ".groovy";
+        String scriptName = getPackage().replace(".", "/") + "/" + "migrateto" + (dbVersion + 1) + ".groovy";
         return scriptMigrator(conn, scriptName);
     }
 
@@ -400,12 +419,13 @@ public class Migrate {
                 throw new MigrationException("Found script but could not read it");
             }
         } else {
-            is = Thread.currentThread().getContextClassLoader().getResourceAsStream(scriptName);
+            is = getResourceAsStream(scriptName);
         }
 
         if (is != null) {
-            ClassLoader parent = Thread.currentThread().getContextClassLoader();
-            GroovyClassLoader loader = new GroovyClassLoader(parent);
+            // Have to figure out why this doesn't work in Ant and if there is a way to fix it.
+            // ClassLoader parent = Thread.currentThread().getContextClassLoader();
+            GroovyClassLoader loader = new GroovyClassLoader(Migrate.class.getClassLoader());
             try {
                 Class groovyClass = loader.parseClass(is);
                 Binding binding = new Binding();
@@ -413,7 +433,7 @@ public class Migrate {
                 binding.setProperty("connection", conn);
                 binding.setProperty("database", getDatabaseName(conn));
                 binding.setProperty("version", getDBVersion());
-                binding.setProperty("tablename", tablename);
+                binding.setProperty("tablename", getTablename());
                 script.setBinding(binding);
                 script.run();
                 return true;
@@ -428,6 +448,15 @@ public class Migrate {
         return false;
     }
 
+    private static InputStream getResourceAsStream(String scriptName) {
+        InputStream is;
+        is = Thread.currentThread().getContextClassLoader().getResourceAsStream(scriptName);
+        if (is == null) {
+            is = Migrate.class.getClassLoader().getResourceAsStream(scriptName);
+        }
+        return is;
+    }
+
     /**
      * Pass the database connection and then a script name that will either be in the classpath or relative
      * to the current directory.
@@ -438,7 +467,7 @@ public class Migrate {
      * @throws MigrationException If the script was found but could not be executed to completion.
      */
     public static boolean sqlScriptMigrator(Connection conn, String scriptName) throws MigrationException {
-        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(scriptName);
+        InputStream is = getResourceAsStream(scriptName);
         if (is == null) {
             File file = new File(scriptName);
             if (file.exists()) {
@@ -451,8 +480,8 @@ public class Migrate {
         }
         if (is != null) {
             logger.info("Using script: " + scriptName);
-// Pull the entire script file into a char buffer
-// Skip lines that start with #
+            // Pull the entire script file into a char buffer
+            // Skip lines that start with #
             StringBuilder sb = new StringBuilder();
             int num = 1;
             try {
@@ -551,15 +580,15 @@ public class Migrate {
     }
 
     private boolean needsMigrate(int dbVersion) throws MigrationException {
-        if (auto) {
+        if (getAuto()) {
             return true;
         } else {
             boolean needsMigrate;
-            if (dbVersion == version) {
+            if (dbVersion == getVersion()) {
                 needsMigrate = false;
             } else {
-                if (dbVersion > version) {
-                    throw new MigrationException("Client version older than database version: " + version + " < " + dbVersion);
+                if (dbVersion > getVersion()) {
+                    throw new MigrationException("Client version older than database version: " + getVersion() + " < " + dbVersion);
                 }
                 needsMigrate = true;
             }
@@ -578,18 +607,18 @@ public class Migrate {
         PreparedStatement ps;
         try {
             Connection conn = getConnection();
-            ps = conn.prepareStatement("SELECT version FROM " + tablename);
+            ps = conn.prepareStatement("SELECT version FROM " + getTablename());
             try {
                 ResultSet rs = ps.executeQuery();
                 try {
                     if (rs.next()) {
                         dbVersion = rs.getInt(1);
                         if (rs.next()) {
-                            throw new MigrationException("Too many version in table: " + tablename);
+                            throw new MigrationException("Too many version in table: " + getTablename());
                         }
                     } else {
                         ps.close();
-                        ps = conn.prepareStatement("INSERT INTO " + tablename + " (version) VALUES (?)");
+                        ps = conn.prepareStatement("INSERT INTO " + getTablename() + " (version) VALUES (?)");
                         ps.setInt(1, 1);
                         try {
                             ps.executeUpdate();
@@ -608,7 +637,7 @@ public class Migrate {
             // We are going to have to make an assumption that the database exists but there is no current
             // database version and use the migrate0 script.
             dbVersion = 0;
-// We should reset the connection state at this point
+            // We should reset the connection state at this point
             Connection conn = getConnection();
             try {
                 if (!conn.getAutoCommit()) {
@@ -626,11 +655,11 @@ public class Migrate {
         try {
             if (connection == null || connection.isClosed()) {
                 if (datasource == null) {
-                    Driver dbdriver = (Driver) Class.forName(driver).newInstance();
+                    Driver dbdriver = (Driver) Class.forName(getDriver()).newInstance();
                     try {
-                        connection = dbdriver.connect(url, properties);
+                        connection = dbdriver.connect(getUrl(), properties);
                     } catch (SQLException e) {
-                        throw new MigrationException("Could not connect to database: " + url, e);
+                        throw new MigrationException("Could not connect to database: " + getUrl(), e);
                     }
                 } else {
                     try {
@@ -648,11 +677,74 @@ public class Migrate {
         } catch (IllegalAccessException e) {
             throw new MigrationException("Could not access driver constructor", e);
         } catch (ClassNotFoundException e) {
-            throw new MigrationException("Could not find driver class in classpath: " + driver, e);
+            throw new MigrationException("Could not find driver class in classpath: " + getDriver(), e);
         } catch (Exception e) {
-            throw new MigrationException("Some other failure to connect: " + url + ", " + properties, e);
+            throw new MigrationException("Some other failure to connect: " + getUrl() + ", " + properties, e);
         }
         return connection;
     }
 
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getDriver() {
+        return driver;
+    }
+
+    public void setDriver(String driver) {
+        this.driver = driver;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
+
+    public Boolean getAuto() {
+        return auto;
+    }
+
+    public void setAuto(Boolean auto) {
+        this.auto = auto;
+    }
+
+    public String getTablename() {
+        return tablename;
+    }
+
+    public void setTablename(String tablename) {
+        this.tablename = tablename;
+    }
+
+    public String getPackage() {
+        return packageName;
+    }
+
+    public void setPackage(String packageName) {
+        this.packageName = packageName;
+    }
 }

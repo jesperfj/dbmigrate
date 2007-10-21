@@ -42,6 +42,7 @@
         <jar basedir="classes" destfile="dbmigration-r${info.entry.commit(revision)}.jar">
             <zipgroupfileset dir="lib" includes="cli*.jar"/>
         </jar>
+        <property name="dist.jar" value="dbmigration-r${info.entry.commit(revision)}.jar"/>
     </target>
 
     <target name="docs">
@@ -78,6 +79,11 @@
                 <fileset dir="test-classes" includes="**/*Test.class"/>
             </batchtest>
         </junit>
+
+        <taskdef name="migrate" classpath="${dist.jar}:test-lib/h2.jar:lib/groovy-all-1.1-rc-1.jar" classname="com.sampullara.db.Migrate"/>
+
+        <migrate url="jdbc:h2:mem:test_migration;DB_CLOSE_DELAY=-1" driver="org.h2.Driver" user="sam" password="" auto="true" package="test/com.sampullara.test.migration"/>
+        <migrate url="jdbc:h2:mem:test_migration2;DB_CLOSE_DELAY=-1" driver="org.h2.Driver" user="sam" password="" version="6" package="test/com.sampullara.test.migration"/> 
     </target>
 
     <target name="dist" depends="jar,plugin,docs">
