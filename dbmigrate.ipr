@@ -441,7 +441,7 @@
     </library>
     <library name="CLI">
       <CLASSES>
-        <root url="jar://$PROJECT_DIR$/lib/cli-10.jar!/" />
+        <root url="jar://$PROJECT_DIR$/lib/cli-r14.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />

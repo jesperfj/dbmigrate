@@ -2,6 +2,7 @@ package com.sampullara.db;
 
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
+import com.sampullara.cli.PropertiesArgs;
 import groovy.lang.Binding;
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.Script;
@@ -133,7 +134,7 @@ public class Migrate {
      * @param p The properties read from the property file
      */
     public Migrate(Properties p) {
-        Args.parse(this, p);
+        PropertiesArgs.parse(this, p);
         checkConfig();
         this.properties = p;
     }
@@ -175,9 +176,20 @@ public class Migrate {
      * @param datasource The datasource used to connect to the database
      */
     public Migrate(Properties p, DataSource datasource) {
-        Args.parse(this, p);
+        PropertiesArgs.parse(this, p);
         this.properties = p;
         this.datasource = datasource;
+    }
+
+    /**
+     * JPA based initialization using a persistence unit name.
+     *
+     * @param p          Additional non-persistence unit related properties
+     * @param persistenceUnit   Name of the persistence unit to migrate
+     */
+    public Migrate(Properties p, String persistenceUnit) {
+        PropertiesArgs.parse(this, p);
+        
     }
 
     /**

@@ -21,12 +21,12 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="CLI" level="project" />
     <orderEntry type="library" name="MySQL" level="project" />
     <orderEntry type="library" name="junit-4.0" level="application" />
     <orderEntry type="library" name="H2" level="project" />
     <orderEntry type="library" name="GROOVY" level="application" />
     <orderEntry type="library" name="PostgreSQL" level="project" />
+    <orderEntry type="library" name="CLI" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
