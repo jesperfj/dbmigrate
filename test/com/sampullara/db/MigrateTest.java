@@ -159,6 +159,7 @@ public class MigrateTest extends TestCase {
         InputStream is =
                 Thread.currentThread().getContextClassLoader().getResourceAsStream("com/sampullara/db/test.properties");
         p.load(is);
+        p.remove("version");
         p.put("auto", "true");
 
         Migrate migrate = new Migrate(p);

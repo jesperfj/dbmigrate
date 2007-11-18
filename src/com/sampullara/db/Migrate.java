@@ -338,6 +338,10 @@ public class Migrate {
         } else {
             logger.log(Level.INFO, "Manually updated database from " + dbVersion + " to " + newVersion);
         }
+        if (dbVersion == 0) {
+            Connection conn = getConnection();
+            lockDB(conn);
+        }
     }
 
     private boolean databaseSpecificClassMigrationFrom(Connection conn, int dbVersion) throws MigrationException {
@@ -634,6 +638,7 @@ public class Migrate {
                 ps.close();
             }
         } catch (SQLException e) {
+            logger.log(Level.WARNING, "Could not access " + tablename + ": " + e);
             // We are going to have to make an assumption that the database exists but there is no current
             // database version and use the migrate0 script.
             dbVersion = 0;

@@ -23,20 +23,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="CLI" level="project" />
     <orderEntry type="library" name="MySQL" level="project" />
-    <orderEntry type="library" name="Tomcat 5" level="application_server_libraries" />
     <orderEntry type="library" name="junit-4.0" level="application" />
     <orderEntry type="library" name="H2" level="project" />
-    <orderEntry type="library" name="PostgreSQL" level="project" />
     <orderEntry type="library" name="GROOVY" level="application" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/GSQL-1.1-SNAPSHOT.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="PostgreSQL" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

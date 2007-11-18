@@ -40,6 +40,9 @@
         <xmlproperty file="svninfo"/>
         <delete file="svninfo"/>
         <jar basedir="classes" destfile="dbmigration-r${info.entry.commit(revision)}.jar">
+            <manifest>
+                <attribute name="Main-Class" value="com.sampullara.db.Migrate"/>
+            </manifest>
             <zipgroupfileset dir="lib" includes="cli*.jar"/>
         </jar>
         <property name="dist.jar" value="dbmigration-r${info.entry.commit(revision)}.jar"/>

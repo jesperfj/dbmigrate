@@ -46,6 +46,7 @@
       <entry name="?*.dtd" />
       <entry name="?*.tld" />
       <entry name="?*.sql" />
+      <entry name="?*.groovy" />
     </wildcardResourcePatterns>
   </component>
   <component name="Cvs2Configuration">
@@ -447,7 +448,7 @@
     </library>
     <library name="H2">
       <CLASSES>
-        <root url="jar://$PROJECT_DIR$/lib/h2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/test-lib/h2.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
