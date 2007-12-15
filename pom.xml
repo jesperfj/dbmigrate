@@ -35,6 +35,13 @@
     </repository>
   </distributionManagement>
 
+  <repositories>
+    <repository>
+      <id>javarants</id>
+      <url>http://maven.javarants.com/artifactory/repo</url>
+    </repository>
+  </repositories>
+
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
