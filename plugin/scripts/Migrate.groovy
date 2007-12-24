@@ -32,11 +32,11 @@ includeTargets << new File("${grailsHome}/scripts/Compile.groovy")
 config = new ConfigObject()
 migrate = null
 
-task('default': "Migrates the current database to the latest") {
+target('default': "Migrates the current database to the latest") {
     depends(migrate)
 }
 
-task ('migrate' : "Migrates the current database to the latest") {
+target ('migrate' : "Migrates the current database to the latest") {
     profile("compiling config") {
         compile()
     }

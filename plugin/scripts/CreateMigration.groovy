@@ -31,11 +31,11 @@ pluginHome = new File("./plugins").listFiles().find {
     it.name.startsWith('dbmigrate-')}
 includeTargets << new File("${pluginHome}/scripts/Migrate.groovy")
 
-task('default': "Migrates the current database to the latest") {
+target('default': "Migrates the current database to the latest") {
     depends(createMigration)
 }
 
-task('createMigration': "Create the next migration in the series") {
+target('createMigration': "Create the next migration in the series") {
     profile("make sure the database is up to date") {
         migrate();
     }
