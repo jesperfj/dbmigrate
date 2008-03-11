@@ -510,31 +510,12 @@ public class Migrate {
                             sb.append(" ");
                         }
                     }
-                    // Attempt to parse lines as we go.  The parser needs to be far more robust to really work
-                    // in the general case. Unfortunately that means we might have to actually parse the DDL which
-                    // would not be the best since it varies from database to database.  At worse we need to handle
-                    // brackets, parens, quotes, etc.
-                    Matcher matcher = pattern.matcher(sb);
-                    int substring = -1;
-                    while (matcher.find()) {
-                        String sql = matcher.group();
-                        substring += sql.length();
-                        sql = sql.substring(0, sql.length() - 1).trim();
-                        Statement st = null;
-                        try {
-                            st = conn.createStatement();
-                            st.execute(sql);
-                        } catch (SQLException e) {
-                            throw new MigrationException("Failed to execute SQL line #" + num + ": " + sql, e);
-                        } finally {
-                            if (st != null) try {
-                                st.close();
-                            } catch (SQLException e) {
-                                logger.log(Level.WARNING, "Failed to close statement, might be leaking them", e);
-                            }
-                        }
+                    // Attempt to parse & execute lines as we go.
+                    SqlStatementParser parser = new SqlStatementParser(sb);
+                    for (String statement : parser.pullStatements()) {
+                    	executeStatement(conn, num, statement);
                     }
-                    sb.delete(0, substring + 1);
+                    
                     num++;
                 }
             } catch (IOException e) {
@@ -546,29 +527,42 @@ public class Migrate {
                     // Ignore exceptions on close
                 }
             }
-            // Now we have read the whole script, now we need to parse it.
-            Matcher matcher = pattern.matcher(sb);
-            while (matcher.find()) {
-                String sql = matcher.group();
-                sql = sql.substring(0, sql.length() - 1).trim();
-                Statement st = null;
-                try {
-                    st = conn.createStatement();
-                    st.execute(sql);
-                } catch (SQLException e) {
-                    throw new MigrationException("Failed to execute SQL statement #" + num + ": " + sql, e);
-                } finally {
-                    if (st != null) try {
-                        st.close();
-                    } catch (SQLException e) {
-                        logger.log(Level.WARNING, "Failed to close statement, might be leaking them", e);
-                    }
-                }
-            }
+            // finally, execute any statement that wasn't terminated with
+            // a semi-colon
+            executeStatement(conn, num, sb.toString());
             return true;
         }
         return false;
     }
+
+    /**
+     * Execute the given sqlStatement on the supplied connection.
+     * 
+     * @param conn the database connection against which to execute the sql
+     * 		statement
+     * @param lineNumber the number of the line from whic
+     * @param sqlStatement the statement to execute
+     * @throws MigrationException if the current statement could not be
+     * 		executed
+     */
+	private static void executeStatement(Connection conn,
+										 int lineNumber,
+										 String sqlStatement)
+	throws MigrationException {
+		Statement st = null;
+		try {
+		    st = conn.createStatement();
+		    st.execute(sqlStatement);
+		} catch (SQLException e) {
+		    throw new MigrationException("Failed to execute SQL line #" + lineNumber + ": " + sqlStatement, e);
+		} finally {
+		    if (st != null) try {
+		        st.close();
+		    } catch (SQLException e) {
+		        logger.log(Level.WARNING, "Failed to close statement, might be leaking them", e);
+		    }
+		}
+	}
 
     public String getDatabaseName(Connection conn) throws MigrationException {
         String databaseName;
